@@ -209,23 +209,24 @@ const handleSubmit = () => {
 }
 
 .modal-header-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: #ffffff;
 }
 
 .icon-create {
-  background: var(--primary-subtle);
-  color: var(--primary);
+  color: #ffffff;
 }
 
 .icon-edit {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
+  color: #ffffff;
 }
 
 .modal-header-text {
@@ -233,13 +234,14 @@ const handleSubmit = () => {
 }
 
 .modal-heading {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
+  letter-spacing: -0.015em;
 }
 
 .modal-subheading {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -252,21 +254,23 @@ const handleSubmit = () => {
   padding: 4px;
   display: flex;
   align-items: center;
+  border-radius: var(--radius-xs);
 }
 .modal-close-btn:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .modal-error-alert {
   margin: 16px 24px 0 24px;
-  background: var(--danger-subtle);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
   display: flex;
   gap: 10px;
-  color: #fca5a5;
-  font-size: 13px;
+  color: #fecdd3;
+  font-size: 12px;
 }
 
 .error-alert-title {
@@ -280,7 +284,7 @@ const handleSubmit = () => {
 }
 
 .modal-form {
-  padding: 20px 24px 24px 24px;
+  padding: 18px 24px 24px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -299,18 +303,19 @@ const handleSubmit = () => {
 }
 
 .form-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .required {
-  color: var(--danger);
+  color: #f43f5e;
 }
 
 .char-count {
   font-size: 11px;
   color: var(--text-muted);
+  font-family: var(--font-mono);
 }
 .char-warning {
   color: #f59e0b;
@@ -319,21 +324,21 @@ const handleSubmit = () => {
 .form-input, .form-select, .form-textarea {
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
   color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.15s;
+  font-size: 13px;
+  transition: all 0.12s;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 
 .input-error {
-  border-color: var(--danger);
+  border-color: #f43f5e;
 }
 
 .field-error-msg {

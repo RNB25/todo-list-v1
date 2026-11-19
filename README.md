@@ -1,121 +1,149 @@
-# Todo List Application (FastAPI + MySQL + Vue 3)
+# Todo List v1
 
-## Deskripsi
-Aplikasi **Todo List** lengkap dengan backend **FastAPI** (Python) dan frontend **Vue 3** (Vite).  
-Implementasi mengikuti SRS‑TODO‑001 yang mencakup:
-- CRUD Todo dengan pagination, sorting, filter, dan bulk‑generate.
-- Health‑check endpoint.
-- Dokumentasi API otomatis via Swagger UI.
-- UI responsif dengan tema Dark Slate / Zinc.
+## Overview
+
+A full‑stack Todo List application built with **FastAPI** (backend) and **Vue 3** (frontend). The project now uses **MySQL** (via XAMPP) as its database. The old SQLite file `todos.db` remains in the repository for legacy reference but is no longer used.
 
 ---
 
-## Prasyarat
-| Komponen | Versi minimal | Cara instalasi |
-|----------|----------------|----------------|
-| **Python** | 3.12+ | `python -m venv .venv && .\.venv\Scripts\activate` |
-| **Node.js / npm** | 20.x | Unduh dari https://nodejs.org/ |
-| **MySQL** (opsional) | 8.0+ | Instal secara lokal atau gunakan SQLite (default) |
-| **Git** | 2.40+ | `git --version` |
+## Prerequisites
+
+- **Python** >= 3.12
+- **Node.js** >= 20 (npm comes with it)
+- **XAMPP** with MySQL service running (default port `3306`)
+- **Git** (for cloning the repo)
+
+> **Note**: The MySQL `root` user is configured with **no password** as you requested. If you set a password, update the connection string accordingly.
 
 ---
 
-## Setup Backend
-```powershell
-# Pindah ke folder proyek (sudah di root)
-cd C:\Users\ESZ GALLERY\Documents\Rofi\interview_task
+## Project Structure
 
-# Buat virtual environment & aktifkan
-python -m venv .venv
-.\.venv\Scripts\activate
+```
+├─ backend/               # FastAPI source code
+│   ├─ app/
+│   ├─ migrations/        # Alembic migration scripts
+│   └─ .env               # Environment variables (do not commit)
+├─ frontend/              # Vue 3 source code
+│   ├─ src/
+│   └─ vite.config.ts
+├─ todos.db               # Legacy SQLite DB (deprecated)
+└─ README.md              # You are reading it now
+```
 
-# Instal dependensi Python
+---
+
+## 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/RNB25/todo-list-v1.git
+cd todo-list-v1
+```
+
+---
+
+## 2️⃣ Backend Setup
+
+### a. Create a virtual environment and install dependencies
+
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Unix/macOS (if needed)
+# source venv/bin/activate
 pip install -r backend/requirements.txt
 ```
 
-### Konfigurasi Database
-- **SQLite (default)** – tidak perlu file `.env` khusus; file `todos.db` akan dibuat di `backend/`.
-- **MySQL** – ubah nilai `DATABASE_URL` di `backend/.env`:
-```
-DATABASE_URL=mysql+aiomysql://<user>:<password>@<host>:3306/<dbname>
-```
-  Kemudian jalankan migrasi:
-```powershell
-alembic upgrade head
+### b. Configure the database connection
+
+Create a `.env` file inside the `backend/` folder (copy the example if present):
+
+```ini
+# backend/.env
+DATABASE_URL=mysql+pymysql://root:@127.0.0.1:3306/todo_db
+# Optional: other env vars like SECRET_KEY, DEBUG, etc.
 ```
 
-### Menjalankan Server
-```powershell
-python run.py   # menjalankan uvicorn dengan --app-dir backend
+> The URL format is `dialect+driver://user:password@host:port/database`.
+
+### c. Create the MySQL database
+
+Open the **XAMPP MySQL console** (or any MySQL client) and run:
+
+```sql
+CREATE DATABASE IF NOT EXISTS todo_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
-Server akan tersedia di **http://localhost:8000**.
+
+### d. Apply Alembic migrations (creates the tables)
+
+```bash
+cd backend
+python -m alembic upgrade head
+```
+
+You should see output similar to:
+
+```
+INFO  [alembic.runtime.migration] Running upgrade  -> head, …
+```
+
+### e. Run the backend server
+
+```bash
+# From the backend directory
+python run.py   # or:
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+The API will be available at `http://localhost:8000`. Health endpoint:
+
+```
+GET /api/v1/health
+```
+
+You should receive JSON indicating `database: "connected"`.
 
 ---
 
-## Setup Frontend
-```powershell
-cd frontend
-npm ci   # atau npm install
+## 3️⃣ Frontend Setup
+
+```bash
+cd ../frontend   # from the project root
+npm install       # install dependencies
+npm run dev       # start dev server (http://localhost:5173)
 ```
 
-### Mode Pengembangan (opsional)
-```powershell
-npm run dev   # Vite dev server pada http://localhost:5173
-```
+For a production build:
 
-### Build Produksi
-```powershell
-npm run build   # hasil di frontend/dist, disajikan oleh FastAPI
+```bash
+npm run build      # builds to frontend/dist/
+npx serve -s dist   # simple static server (install serve globally if needed)
 ```
 
 ---
 
-## API Endpoint Ringkas
-| Metode | Path | Deskripsi |
-|--------|------|-----------|
-| **GET** | `/api/v1/todos` | Daftar Todo (dapat pagination & filter) |
-| **GET** | `/api/v1/todos/{id}` | Detail Todo |
-| **POST** | `/api/v1/todos` | Buat Todo baru |
-| **PUT** | `/api/v1/todos/{id}` | Update Todo |
-| **DELETE** | `/api/v1/todos/{id}` | Hapus Todo |
-| **POST** | `/api/v1/todos/bulk` | Generate random Todo (parameter `count`) |
-| **GET** | `/api/v1/health` | Health check – mengembalikan `{"status":"healthy","database":"connected"}` |
-| **GET** | `/docs` | Swagger UI (OpenAPI) |
-| **GET** | `/redoc` | ReDoc UI |
+## 4️⃣ What is `todos.db`?
+
+`todos.db` was the original **SQLite** database file used before the migration to MySQL. After switching to MySQL, the application no longer reads or writes to this file. You can safely delete it or keep it as a reference; it does **not** affect the running application.
 
 ---
 
-## Cara Mengecek Health
-```powershell
-curl http://localhost:8000/api/v1/health
-```
-atau buka di browser **http://localhost:8000/api/v1/health**.
+## 5️⃣ Common Troubleshooting
+
+| Issue | Likely Cause | Fix |
+|-------|--------------|-----|
+| **Cannot connect to MySQL** | MySQL service not running or wrong credentials | Start MySQL via XAMPP; ensure the connection string in `.env` matches your setup. |
+| **Alembic fails** | Running command from wrong directory or missing `alembic.ini` | Execute `python -m alembic upgrade head` **inside** the `backend` folder. |
+| **Backend health shows `database: "disconnected"`** | `.env` not loaded or wrong `DATABASE_URL` | Verify the `.env` file exists, has the correct URL, and restart the server. |
+| **Frontend cannot reach API** | CORS mis‑configuration or wrong backend URL | Ensure the backend runs on `http://localhost:8000` and the frontend’s `VITE_API_URL` points there. |
 
 ---
 
-## Swagger UI
-Buka di browser:
-```
-http://localhost:8000/docs
-```
-Menampilkan semua endpoint beserta contoh request/response.
+## 6️⃣ License
+
+[MIT License](LICENSE)
 
 ---
 
-## Deploy (opsional)
-1. Pastikan variabel `DATABASE_URL` mengarah ke MySQL production.
-2. Jalankan `alembic upgrade head` untuk migrasi.
-3. Gunakan proses manager (systemd, PM2, Docker) untuk menjalankan `python run.py`.
-4. Frontend sudah siap sebagai static files di `frontend/dist`.
-
----
-
-## Kontribusi
-1. Fork repositori ini.
-2. Buat branch fitur: `git checkout -b feature/…`.
-3. Push perubahan dan buat Pull Request.
-
----
-
-## Lisensi
-MIT License – lihat file `LICENSE` untuk detail.
+*Happy coding!*

@@ -1,106 +1,117 @@
 <template>
-  <div class="filter-card">
-    <div class="filter-row primary-row">
-      <!-- Search Input -->
-      <div class="search-box">
-        <Search :size="16" class="search-icon" />
+  <div class="toolbar-card">
+    <div class="toolbar-primary">
+      <!-- Search Input with Keyboard Shortcut -->
+      <div class="search-field">
+        <Search :size="15" class="search-icon" />
         <input
+          ref="searchInput"
           type="text"
           v-model="localQ"
-          placeholder="Cari berdasarkan judul atau deskripsi..."
+          placeholder="Cari judul atau deskripsi..."
           class="search-input"
           @keydown.enter="applySearch"
+          aria-label="Cari todo"
         />
-        <button
-          v-if="localQ"
-          class="clear-search-btn"
-          @click="clearSearch"
-          title="Hapus pencarian"
-        >
-          <X :size="14" />
-        </button>
+        <div class="search-extras">
+          <button
+            v-if="localQ"
+            class="clear-btn"
+            @click="clearSearch"
+            title="Hapus pencarian"
+          >
+            <X :size="13" />
+          </button>
+          <kbd class="shortcut-hint" title="Tekan / untuk fokus pencarian">/</kbd>
+        </div>
       </div>
 
-      <!-- Quick Status Filters -->
-      <div class="status-tabs" role="tablist">
+      <!-- Segmented Status Switcher -->
+      <div class="segmented-control" role="tablist">
         <button
           v-for="tab in statusTabs"
           :key="tab.value"
-          class="status-tab"
+          class="segment-btn"
           :class="{ active: currentStatus === tab.value }"
           @click="selectStatus(tab.value)"
+          role="tab"
+          :aria-selected="currentStatus === tab.value"
         >
           {{ tab.label }}
         </button>
       </div>
     </div>
 
-    <div class="filter-row secondary-row">
-      <!-- Priority Dropdown -->
-      <div class="filter-item">
-        <label class="filter-label">Prioritas:</label>
-        <select
-          :value="currentPriority"
-          @change="onPriorityChange($event.target.value)"
-          class="filter-select"
+    <div class="toolbar-secondary">
+      <div class="filter-controls-group">
+        <!-- Priority Dropdown -->
+        <div class="control-item">
+          <label class="control-label" for="priority-select">Prioritas</label>
+          <select
+            id="priority-select"
+            :value="currentPriority"
+            @change="onPriorityChange($event.target.value)"
+            class="styled-select"
+          >
+            <option value="">Semua Prioritas</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+
+        <!-- Sort By Dropdown -->
+        <div class="control-item">
+          <label class="control-label" for="sortby-select">Urutkan</label>
+          <select
+            id="sortby-select"
+            :value="currentSortBy"
+            @change="onSortByChange($event.target.value)"
+            class="styled-select"
+          >
+            <option value="created_at">Waktu Dibuat</option>
+            <option value="updated_at">Waktu Diperbarui</option>
+            <option value="title">Judul (A-Z)</option>
+            <option value="status">Status</option>
+            <option value="priority">Prioritas</option>
+          </select>
+        </div>
+
+        <!-- Sort Direction Toggle -->
+        <button
+          class="btn btn-secondary btn-sm sort-direction-btn"
+          @click="toggleSortOrder"
+          :title="`Arah urutan: ${currentSortOrder.toUpperCase()}`"
         >
-          <option value="">Semua Prioritas</option>
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
+          <ArrowDownNarrowWide v-if="currentSortOrder === 'desc'" :size="14" />
+          <ArrowUpWideNarrow v-else :size="14" />
+          <span>{{ currentSortOrder === 'desc' ? 'Desc' : 'Asc' }}</span>
+        </button>
+
+        <!-- Page Size Selector -->
+        <div class="control-item">
+          <label class="control-label" for="pagesize-select">Per Halaman</label>
+          <select
+            id="pagesize-select"
+            :value="currentPageSize"
+            @change="onPageSizeChange(Number($event.target.value))"
+            class="styled-select select-narrow"
+          >
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Sort By Dropdown -->
-      <div class="filter-item">
-        <label class="filter-label">Urutkan:</label>
-        <select
-          :value="currentSortBy"
-          @change="onSortByChange($event.target.value)"
-          class="filter-select"
-        >
-          <option value="created_at">Waktu Dibuat</option>
-          <option value="updated_at">Waktu Diperbarui</option>
-          <option value="title">Judul (A-Z)</option>
-          <option value="status">Status</option>
-          <option value="priority">Prioritas</option>
-        </select>
-      </div>
-
-      <!-- Sort Order Toggle -->
-      <button
-        class="btn btn-secondary btn-sm sort-toggle-btn"
-        @click="toggleSortOrder"
-        :title="`Arah urutan: ${currentSortOrder.toUpperCase()}`"
-      >
-        <ArrowDownNarrowWide v-if="currentSortOrder === 'desc'" :size="15" />
-        <ArrowUpWideNarrow v-else :size="15" />
-        <span>{{ currentSortOrder === 'desc' ? 'Terbaru / Desc' : 'Terlama / Asc' }}</span>
-      </button>
-
-      <!-- Page Size Selector -->
-      <div class="filter-item">
-        <label class="filter-label">Per Halaman:</label>
-        <select
-          :value="currentPageSize"
-          @change="onPageSizeChange(Number($event.target.value))"
-          class="filter-select select-compact"
-        >
-          <option :value="10">10</option>
-          <option :value="20">20</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-        </select>
-      </div>
-
-      <!-- Reset Filters Button -->
+      <!-- Reset Filters Button if active -->
       <button
         v-if="hasActiveFilters"
-        class="btn btn-sm btn-secondary reset-btn"
+        class="btn btn-sm btn-secondary reset-filter-btn"
         @click="$emit('reset-filters')"
-        title="Reset semua filter ke pengaturan default"
       >
-        <RotateCcw :size="13" />
+        <RotateCcw :size="12" />
         <span>Reset Filter</span>
       </button>
     </div>
@@ -108,14 +119,8 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
-import {
-  Search,
-  X,
-  RotateCcw,
-  ArrowDownNarrowWide,
-  ArrowUpWideNarrow
-} from 'lucide-vue-next'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
+import { Search, X, ArrowDownNarrowWide, ArrowUpWideNarrow, RotateCcw } from 'lucide-vue-next'
 
 const props = defineProps({
   currentStatus: { type: String, default: '' },
@@ -137,54 +142,57 @@ const emit = defineEmits([
 ])
 
 const localQ = ref(props.currentQ)
+const searchInput = ref(null)
+
+const statusTabs = [
+  { label: 'Semua', value: '' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'In Progress', value: 'progress' },
+  { label: 'Done', value: 'done' }
+]
 
 watch(() => props.currentQ, (newVal) => {
   localQ.value = newVal
 })
 
-let searchTimeout = null
+let debounceTimer = null
 watch(localQ, (newVal) => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    emit('update:q', newVal)
-  }, 400)
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    emit('update:q', newVal.trim())
+  }, 250)
 })
 
-const applySearch = () => {
-  clearTimeout(searchTimeout)
-  emit('update:q', localQ.value)
+function applySearch() {
+  clearTimeout(debounceTimer)
+  emit('update:q', localQ.value.trim())
 }
 
-const clearSearch = () => {
+function clearSearch() {
   localQ.value = ''
   emit('update:q', '')
+  if (searchInput.value) {
+    searchInput.value.focus()
+  }
 }
 
-const statusTabs = [
-  { label: 'Semua Status', value: '' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Progress', value: 'progress' },
-  { label: 'Done', value: 'done' }
-]
-
-const selectStatus = (val) => {
-  emit('update:status', val)
+function selectStatus(statusVal) {
+  emit('update:status', statusVal)
 }
 
-const onPriorityChange = (val) => {
+function onPriorityChange(val) {
   emit('update:priority', val)
 }
 
-const onSortByChange = (val) => {
+function onSortByChange(val) {
   emit('update:sortBy', val)
 }
 
-const toggleSortOrder = () => {
-  const nextOrder = props.currentSortOrder === 'desc' ? 'asc' : 'desc'
-  emit('update:sortOrder', nextOrder)
+function toggleSortOrder() {
+  emit('update:sortOrder', props.currentSortOrder === 'desc' ? 'asc' : 'desc')
 }
 
-const onPageSizeChange = (val) => {
+function onPageSizeChange(val) {
   emit('update:pageSize', val)
 }
 
@@ -198,166 +206,202 @@ const hasActiveFilters = computed(() => {
     props.currentPageSize !== 20
   )
 })
+
+function handleGlobalKeydown(e) {
+  if (e.key === '/' && document.activeElement !== searchInput.value && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+    e.preventDefault()
+    searchInput.value?.focus()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+})
 </script>
 
 <style scoped>
-.filter-card {
-  background: var(--bg-card);
+.toolbar-card {
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  box-shadow: var(--shadow-card);
 }
 
-.filter-row {
+.toolbar-primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 64px 8px 34px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  transition: all 0.12s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.search-extras {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  border-radius: 2px;
+}
+
+.clear-btn:hover {
+  color: #ffffff;
+}
+
+.shortcut-hint {
+  pointer-events: none;
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  align-items: center;
+  background: var(--bg-input);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.segment-btn {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.segment-btn:hover {
+  color: var(--text-primary);
+}
+
+.segment-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Toolbar Secondary */
+.toolbar-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.filter-controls-group {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
 }
 
-.primary-row {
-  justify-content: space-between;
-}
-
-.search-box {
-  position: relative;
-  flex: 1;
-  min-width: 260px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-muted);
-}
-
-.search-input {
-  width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 10px 36px 10px 36px;
-  color: var(--text-primary);
-  font-size: 14px;
-  transition: all 0.15s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
-}
-
-.clear-search-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
+.control-item {
   display: flex;
   align-items: center;
-}
-.clear-search-btn:hover {
-  color: var(--text-primary);
+  gap: 6px;
 }
 
-.status-tabs {
-  display: flex;
-  background: var(--bg-input);
-  padding: 3px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-}
-
-.status-tab {
-  padding: 6px 12px;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  font-size: 13px;
+.control-label {
+  font-size: 11px;
   font-weight: 500;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.status-tab.active {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-  font-weight: 600;
-}
-
-.secondary-row {
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filter-label {
-  font-size: 12px;
-  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
-.filter-select {
+.styled-select {
   background: var(--bg-input);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 7px 12px;
-  color: var(--text-primary);
-  font-size: 13px;
+  border-radius: var(--radius-xs);
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 4px 8px;
   cursor: pointer;
-}
-
-.filter-select:focus {
   outline: none;
-  border-color: var(--border-focus);
+  transition: all 0.12s;
 }
 
-.select-compact {
-  padding: 7px 8px;
+.styled-select:focus {
+  border-color: var(--border-strong);
+  color: #ffffff;
 }
 
-.reset-btn {
-  margin-left: auto;
-  color: #f87171;
-}
-.reset-btn:hover {
-  background: var(--danger-subtle);
+.select-narrow {
+  width: 60px;
 }
 
-@media (max-width: 768px) {
-  .primary-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .status-tabs {
-    overflow-x: auto;
-  }
-  .secondary-row {
-    gap: 8px;
-  }
-  .reset-btn {
-    margin-left: 0;
-    width: 100%;
-  }
+.sort-direction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.reset-filter-btn {
+  color: var(--text-muted);
+  gap: 5px;
+}
+
+.reset-filter-btn:hover {
+  color: #ffffff;
 }
 </style>

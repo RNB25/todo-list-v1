@@ -17,6 +17,7 @@
           :pendingCount="stats.pending"
           :progressCount="stats.progress"
           :doneCount="stats.done"
+          :currentStatus="filters.status"
           @filter-status="quickFilterStatus"
         />
 
@@ -111,7 +112,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { AlertCircle, RefreshCw } from 'lucide-vue-next'
 import { api } from './api/client.js'
 
@@ -387,11 +388,41 @@ const handleConfirmBulk = async (count) => {
   }
 }
 
+const handleKeyDown = (e) => {
+  const isInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)
+  if (e.key === 'Escape') {
+    isTodoModalOpen.value = false
+    isDetailModalOpen.value = false
+    isDeleteModalOpen.value = false
+    isBulkModalOpen.value = false
+    return
+  }
+
+  if (isInput) return
+
+  if ((e.key === 'n' || e.key === 'N') && !isAnyModalOpen()) {
+    e.preventDefault()
+    openCreateModal()
+  } else if ((e.key === 'b' || e.key === 'B') && !isAnyModalOpen()) {
+    e.preventDefault()
+    openBulkModal()
+  }
+}
+
+const isAnyModalOpen = () => {
+  return isTodoModalOpen.value || isDetailModalOpen.value || isDeleteModalOpen.value || isBulkModalOpen.value
+}
+
 onMounted(() => {
   checkHealth()
   loadData()
+  window.addEventListener('keydown', handleKeyDown)
   // Periodic health ping
-  setInterval(checkHealth, 30000)
+  const timer = setInterval(checkHealth, 30000)
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown)
+    clearInterval(timer)
+  })
 })
 </script>
 

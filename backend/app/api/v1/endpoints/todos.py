@@ -67,6 +67,13 @@ def list_todos(
     status_code=status.HTTP_201_CREATED,
     summary="Generate 1.000 todo acak secara atomik"
 )
+@router.post(
+    "/bulk",
+    response_model=BulkRandomResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Generate 1.000 todo acak secara atomik (alias)",
+    include_in_schema=False
+)
 def bulk_random(
     payload: Optional[BulkRandomRequest] = None,
     db: Session = Depends(get_db)
