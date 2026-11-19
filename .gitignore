@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# SQLite (legacy - project now uses MySQL)
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env.local
+.env.production
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Alembic pycache
+migrations/__pycache__/
+migrations/versions/__pycache__/
