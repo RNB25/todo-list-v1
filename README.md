@@ -23,7 +23,7 @@ Implementasi mengikuti SRS‑TODO‑001 yang mencakup:
 ## Setup Backend
 ```powershell
 # Pindah ke folder proyek (sudah di root)
-cd C:\Users\ESZ GALLERY\Documents\Rofi\interview_task
+cd {project address}
 
 # Buat virtual environment & aktifkan
 python -m venv .venv
