@@ -1,127 +1,136 @@
 <template>
   <div class="table-container">
-    <!-- Loading State Skeleton -->
-    <div v-if="loading" class="skeleton-wrapper" aria-label="Memuat data todo...">
-      <div v-for="i in 5" :key="i" class="skeleton-row">
-        <div class="skeleton-box skeleton-title"></div>
-        <div class="skeleton-box skeleton-badge"></div>
-        <div class="skeleton-box skeleton-badge"></div>
-        <div class="skeleton-box skeleton-date"></div>
-        <div class="skeleton-box skeleton-actions"></div>
+    <!-- Skeleton Loading -->
+    <div v-if="loading" class="skeleton-wrapper" aria-label="Memuat data...">
+      <div v-for="i in 6" :key="i" class="skeleton-row">
+        <div class="skeleton-cell cell-checkbox"></div>
+        <div class="skeleton-cell cell-title"></div>
+        <div class="skeleton-cell cell-badge"></div>
+        <div class="skeleton-cell cell-badge"></div>
+        <div class="skeleton-cell cell-uuid"></div>
+        <div class="skeleton-cell cell-date"></div>
       </div>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="!todos || todos.length === 0" class="empty-state">
       <div class="empty-icon-wrap">
-        <Inbox :size="36" />
+        <Inbox :size="28" />
       </div>
-      <h3 class="empty-title">Tidak ada todo ditemukan</h3>
+      <h3 class="empty-title">Tidak ada todo yang cocok</h3>
       <p class="empty-desc">
-        {{ hasFilters ? 'Coba ubah kata kunci atau setel ulang filter pencarian Anda.' : 'Belum ada item todo tersimpan. Klik tombol di bawah untuk membuat todo pertama Anda!' }}
+        {{ hasFilters ? 'Filter pencarian Anda tidak menghasilkan data apapun.' : 'Belum ada data todo di database MySQL. Buat todo pertama Anda atau gunakan tombol Generate Data!' }}
       </p>
       <div class="empty-actions">
         <button v-if="hasFilters" class="btn btn-secondary btn-sm" @click="$emit('reset-filters')">
           Reset Filter
         </button>
         <button class="btn btn-primary btn-sm" @click="$emit('open-create')">
-          <Plus :size="15" />
+          <Plus :size="14" />
           <span>Tambah Todo Baru</span>
         </button>
       </div>
     </div>
 
-    <!-- Table with Data -->
+    <!-- Data Table -->
     <div v-else class="table-responsive">
       <table class="data-table">
         <thead>
           <tr>
+            <th class="th-status" style="width: 140px;">Status</th>
             <th class="th-title">Judul & Deskripsi</th>
-            <th class="th-status">Status</th>
-            <th class="th-priority">Prioritas</th>
-            <th class="th-uuid">UUID v7</th>
-            <th class="th-date">Waktu Dibuat</th>
-            <th class="th-actions">Aksi</th>
+            <th class="th-priority" style="width: 110px;">Prioritas</th>
+            <th class="th-uuid" style="width: 130px;">UUID v7</th>
+            <th class="th-date" style="width: 140px;">Waktu Dibuat</th>
+            <th class="th-actions" style="width: 100px;">Aksi</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="todo in todos" :key="todo.id" class="table-row">
-            <!-- Title & Description -->
-            <td class="td-title">
-              <div class="title-cell" @click="$emit('view-detail', todo)">
-                <div class="todo-title" :class="{ 'title-done': todo.status === 'done' }">
-                  {{ todo.title }}
-                </div>
-                <div v-if="todo.description" class="todo-desc">
-                  {{ truncate(todo.description, 75) }}
-                </div>
-              </div>
-            </td>
-
-            <!-- Status Badge with quick dropdown/click -->
+          <tr 
+            v-for="todo in todos" 
+            :key="todo.id" 
+            class="table-row"
+            :class="{ 'row-done': todo.status === 'done' }"
+          >
+            <!-- Status Column with 1-click toggle -->
             <td class="td-status">
               <button
-                class="badge badge-btn"
-                :class="`badge-${todo.status}`"
+                class="status-toggle-pill"
+                :class="`status-${todo.status}`"
                 @click="cycleStatus(todo)"
-                title="Klik untuk mengubah status dengan cepat"
+                title="Klik untuk mengubah status (Pending → Progress → Done)"
               >
-                <Clock v-if="todo.status === 'pending'" :size="12" />
-                <Activity v-else-if="todo.status === 'progress'" :size="12" />
-                <CheckCircle2 v-else :size="12" />
-                <span>{{ todo.status }}</span>
+                <span class="status-indicator-dot"></span>
+                <span class="status-text">{{ todo.status }}</span>
               </button>
             </td>
 
-            <!-- Priority Badge -->
-            <td class="td-priority">
-              <span class="badge" :class="`badge-${todo.priority}`">
-                <span class="priority-dot"></span>
-                <span>{{ todo.priority }}</span>
-              </span>
+            <!-- Title & Description Column -->
+            <td class="td-title" @click="$emit('view-detail', todo)">
+              <div class="title-cell-wrap">
+                <span class="todo-title" :class="{ 'title-done': todo.status === 'done' }">
+                  {{ todo.title }}
+                </span>
+                <span v-if="todo.description" class="todo-desc">
+                  {{ truncate(todo.description, 80) }}
+                </span>
+              </div>
             </td>
 
-            <!-- UUID v7 -->
+            <!-- Priority Column -->
+            <td class="td-priority">
+              <div class="priority-chip" :class="`priority-${todo.priority}`">
+                <span class="priority-bars" aria-hidden="true">
+                  <span class="bar bar-1"></span>
+                  <span class="bar bar-2" :class="{ active: todo.priority === 'medium' || todo.priority === 'high' }"></span>
+                  <span class="bar bar-3" :class="{ active: todo.priority === 'high' }"></span>
+                </span>
+                <span class="priority-text">{{ todo.priority }}</span>
+              </div>
+            </td>
+
+            <!-- UUID v7 Column -->
             <td class="td-uuid">
               <button
                 class="uuid-pill"
                 @click="copyUuid(todo.id)"
                 :title="`Klik untuk menyalin UUID: ${todo.id}`"
               >
-                {{ todo.id.substring(0, 8) }}...{{ todo.id.substring(todo.id.length - 4) }}
-                <Copy :size="10" class="copy-icon" />
+                <span>{{ todo.id.substring(0, 8) }}</span>
+                <Check v-if="copiedId === todo.id" :size="11" class="copy-success-icon" />
+                <Copy v-else :size="11" class="copy-icon" />
               </button>
             </td>
 
-            <!-- Date -->
-            <td class="td-date">
+            <!-- Date Column -->
+            <td class="td-date" :title="`ISO: ${todo.created_at}`">
               <div class="date-main">{{ formatDate(todo.created_at) }}</div>
               <div class="date-sub">{{ formatRelative(todo.created_at) }}</div>
             </td>
 
-            <!-- Action buttons -->
+            <!-- Actions Column -->
             <td class="td-actions">
-              <div class="action-btn-group">
+              <div class="action-buttons-group">
                 <button
-                  class="btn btn-secondary btn-icon"
+                  class="action-btn"
                   @click="$emit('view-detail', todo)"
-                  title="Lihat Detail"
+                  title="Lihat Detail Todo"
                 >
-                  <Eye :size="14" />
+                  <Eye :size="13" />
                 </button>
                 <button
-                  class="btn btn-secondary btn-icon"
+                  class="action-btn"
                   @click="$emit('edit-todo', todo)"
                   title="Edit Todo"
                 >
-                  <Edit3 :size="14" />
+                  <Pencil :size="13" />
                 </button>
                 <button
-                  class="btn btn-danger btn-icon"
+                  class="action-btn btn-action-delete"
                   @click="$emit('delete-todo', todo)"
                   title="Hapus Todo"
                 >
-                  <Trash2 :size="14" />
+                  <Trash2 :size="13" />
                 </button>
               </div>
             </td>
@@ -131,55 +140,36 @@
     </div>
 
     <!-- Pagination Footer -->
-    <div v-if="meta && meta.total_items > 0" class="pagination-footer">
+    <div v-if="todos && todos.length > 0" class="pagination-footer">
       <div class="pagination-info">
-        Menampilkan <strong>{{ rangeStart }}</strong> - <strong>{{ rangeEnd }}</strong> dari <strong>{{ meta.total_items.toLocaleString('id-ID') }}</strong> todo
+        Menampilkan 
+        <span class="info-highlight">{{ rangeStart }} - {{ rangeEnd }}</span> 
+        dari 
+        <span class="info-highlight">{{ (meta.total_items ?? 0).toLocaleString('id-ID') }}</span> 
+        todo
       </div>
 
-      <div class="pagination-nav">
-        <!-- First Page -->
+      <div class="pagination-controls">
         <button
           class="btn btn-secondary btn-sm"
           :disabled="meta.page <= 1"
-          @click="$emit('page-change', 1)"
-          title="Halaman Pertama"
+          @click="goToPage(meta.page - 1)"
         >
-          <ChevronsLeft :size="15" />
+          <ChevronLeft :size="14" />
+          <span>Sebelumnya</span>
         </button>
 
-        <!-- Prev Page -->
-        <button
-          class="btn btn-secondary btn-sm"
-          :disabled="meta.page <= 1"
-          @click="$emit('page-change', meta.page - 1)"
-          title="Halaman Sebelumnya"
-        >
-          <ChevronLeft :size="15" />
-        </button>
+        <span class="page-current">
+          Hal <span class="page-num">{{ meta.page }}</span> / {{ meta.total_pages || 1 }}
+        </span>
 
-        <!-- Page Indicator Pill -->
-        <div class="page-current-pill">
-          Halaman <span>{{ meta.page }}</span> dari <span>{{ meta.total_pages || 1 }}</span>
-        </div>
-
-        <!-- Next Page -->
         <button
           class="btn btn-secondary btn-sm"
           :disabled="meta.page >= meta.total_pages"
-          @click="$emit('page-change', meta.page + 1)"
-          title="Halaman Berikutnya"
+          @click="goToPage(meta.page + 1)"
         >
-          <ChevronRight :size="15" />
-        </button>
-
-        <!-- Last Page -->
-        <button
-          class="btn btn-secondary btn-sm"
-          :disabled="meta.page >= meta.total_pages"
-          @click="$emit('page-change', meta.total_pages)"
-          title="Halaman Terakhir"
-        >
-          <ChevronsRight :size="15" />
+          <span>Berikutnya</span>
+          <ChevronRight :size="14" />
         </button>
       </div>
     </div>
@@ -187,26 +177,25 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import {
   Inbox,
   Plus,
-  Clock,
-  Activity,
-  CheckCircle2,
-  Copy,
   Eye,
-  Edit3,
+  Pencil,
   Trash2,
+  Copy,
+  Check,
   ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight
+  ChevronRight
 } from 'lucide-vue-next'
 
 const props = defineProps({
   todos: { type: Array, default: () => [] },
-  meta: { type: Object, default: () => ({ page: 1, page_size: 20, total_items: 0, total_pages: 0 }) },
+  meta: {
+    type: Object,
+    default: () => ({ page: 1, page_size: 20, total: 0, total_pages: 1 })
+  },
   loading: { type: Boolean, default: false },
   hasFilters: { type: Boolean, default: false }
 })
@@ -222,75 +211,87 @@ const emit = defineEmits([
   'copy-success'
 ])
 
+const copiedId = ref(null)
+
 const rangeStart = computed(() => {
-  if (!props.meta.total_items) return 0
+  if (props.meta.total_items === 0) return 0
   return (props.meta.page - 1) * props.meta.page_size + 1
 })
 
 const rangeEnd = computed(() => {
-  if (!props.meta.total_items) return 0
   return Math.min(props.meta.page * props.meta.page_size, props.meta.total_items)
 })
 
-const truncate = (str, len) => {
-  if (!str) return ''
-  return str.length > len ? str.substring(0, len) + '...' : str
+function cycleStatus(todo) {
+  const map = {
+    pending: 'progress',
+    progress: 'done',
+    done: 'pending'
+  }
+  const nextStatus = map[todo.status] || 'pending'
+  emit('cycle-status', { id: todo.id, status: nextStatus })
 }
 
-const formatDate = (isoStr) => {
-  if (!isoStr) return '-'
+function copyUuid(id) {
+  navigator.clipboard.writeText(id).then(() => {
+    copiedId.value = id
+    emit('copy-success', `UUID tersalin: ${id}`)
+    setTimeout(() => {
+      if (copiedId.value === id) {
+        copiedId.value = null
+      }
+    }, 2000)
+  })
+}
+
+function truncate(str, maxLen) {
+  if (!str) return ''
+  return str.length > maxLen ? str.substring(0, maxLen) + '...' : str
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '-'
   try {
-    const d = new Date(isoStr)
+    const d = new Date(dateStr)
     return d.toLocaleDateString('id-ID', {
-      day: 'numeric',
+      day: '2-digit',
       month: 'short',
       year: 'numeric'
     })
   } catch {
-    return isoStr
+    return dateStr
   }
 }
 
-const formatRelative = (isoStr) => {
-  if (!isoStr) return ''
+function formatRelative(dateStr) {
+  if (!dateStr) return ''
   try {
-    const d = new Date(isoStr)
-    return d.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+    const d = new Date(dateStr)
+    const diffSec = Math.floor((new Date() - d) / 1000)
+    if (diffSec < 60) return 'Baru saja'
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)} mnt lalu`
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)} jam lalu`
+    const diffDays = Math.floor(diffSec / 86400)
+    return `${diffDays} hari lalu`
   } catch {
     return ''
   }
 }
 
-const copyUuid = async (uuid) => {
-  try {
-    await navigator.clipboard.writeText(uuid)
-    emit('copy-success', 'UUID v7 berhasil disalin ke clipboard!')
-  } catch {
-    // fallback
+function goToPage(p) {
+  if (p >= 1 && p <= props.meta.total_pages) {
+    emit('page-change', p)
   }
-}
-
-const cycleStatus = (todo) => {
-  const nextMap = {
-    pending: 'progress',
-    progress: 'done',
-    done: 'pending'
-  }
-  const nextStatus = nextMap[todo.status] || 'pending'
-  emit('cycle-status', { id: todo.id, status: nextStatus })
 }
 </script>
 
 <style scoped>
 .table-container {
-  background: var(--bg-card);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-card);
 }
 
 .table-responsive {
@@ -301,168 +302,209 @@ const cycleStatus = (todo) => {
 .data-table {
   width: 100%;
   border-collapse: collapse;
+  font-size: 13px;
   text-align: left;
-  font-size: 14px;
 }
 
 .data-table thead {
-  background: #0f1523;
+  background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .data-table th {
-  padding: 14px 18px;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
+  user-select: none;
 }
 
 .table-row {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  transition: background-color 0.15s ease;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.1s ease;
 }
 
 .table-row:hover {
-  background-color: var(--bg-card-hover);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.table-row:last-child {
+  border-bottom: none;
 }
 
 .data-table td {
-  padding: 14px 18px;
+  padding: 12px 14px;
   vertical-align: middle;
 }
 
-.title-cell {
+/* Status Pill */
+.status-toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+
+.status-toggle-pill:hover {
+  transform: translateY(-1px);
+}
+
+.status-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-pending {
+  background: var(--status-pending-bg);
+  border-color: var(--status-pending-border);
+  color: #cbd5e1;
+}
+.status-pending .status-indicator-dot { background-color: var(--status-pending); }
+
+.status-progress {
+  background: var(--status-progress-bg);
+  border-color: var(--status-progress-border);
+  color: #fde68a;
+}
+.status-progress .status-indicator-dot { 
+  background-color: var(--status-progress);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+.status-done {
+  background: var(--status-done-bg);
+  border-color: var(--status-done-border);
+  color: #a7f3d0;
+}
+.status-done .status-indicator-dot { background-color: var(--status-done); }
+
+/* Title Cell */
+.title-cell-wrap {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .todo-title {
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.35;
+  transition: color 0.12s;
+}
+
+.title-cell-wrap:hover .todo-title {
+  color: #ffffff;
+  text-decoration: underline;
 }
 
 .title-done {
   text-decoration: line-through;
-  color: var(--text-muted);
+  color: var(--text-muted) !important;
 }
 
 .todo-desc {
   font-size: 12px;
   color: var(--text-muted);
-  margin-top: 3px;
+  line-height: 1.3;
 }
 
-.badge-btn {
-  cursor: pointer;
-  transition: all 0.15s;
-  border: 1px solid transparent;
-}
-.badge-btn:hover {
-  transform: scale(1.04);
-}
-
-.priority-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.copy-icon {
-  margin-left: 4px;
-  opacity: 0.6;
-}
-
-.date-main {
-  font-size: 13px;
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.date-sub {
+/* Priority Chip with Signal Bars */
+.priority-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
   font-size: 11px;
+  text-transform: uppercase;
+}
+
+.priority-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 10px;
+}
+
+.priority-bars .bar {
+  width: 2.5px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 1px;
+}
+.bar-1 { height: 4px; }
+.bar-2 { height: 7px; }
+.bar-3 { height: 10px; }
+
+.priority-low { color: #38bdf8; }
+.priority-low .bar-1 { background: #38bdf8; }
+
+.priority-medium { color: #fbbf24; }
+.priority-medium .bar-1, .priority-medium .bar-2.active { background: #fbbf24; }
+
+.priority-high { color: #f43f5e; }
+.priority-high .bar-1, .priority-high .bar-2.active, .priority-high .bar-3.active { background: #f43f5e; }
+
+/* UUID Pill */
+.copy-icon {
   color: var(--text-muted);
 }
-
-.action-btn-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.copy-success-icon {
+  color: #10b981;
 }
 
-/* Skeleton Loading */
-.skeleton-wrapper {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.skeleton-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.skeleton-box {
-  background: linear-gradient(90deg, #182235 25%, #222f47 50%, #182235 75%);
-  background-size: 200% 100%;
-  animation: skeletonPulse 1.5s infinite;
-  border-radius: var(--radius-sm);
-  height: 24px;
-}
-
-.skeleton-title { flex: 2; height: 32px; }
-.skeleton-badge { width: 80px; }
-.skeleton-date { width: 100px; }
-.skeleton-actions { width: 90px; }
-
-@keyframes skeletonPulse {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Empty State */
-.empty-state {
-  padding: 60px 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-icon-wrap {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: rgba(148, 163, 184, 0.1);
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
-
-.empty-desc {
-  font-size: 14px;
+/* Date */
+.date-main {
+  font-size: 12px;
   color: var(--text-secondary);
-  max-width: 420px;
-  margin-bottom: 20px;
+}
+.date-sub {
+  font-size: 10px;
+  color: var(--text-muted);
 }
 
-.empty-actions {
+/* Action Buttons */
+.action-buttons-group {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  padding: 5px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: var(--border-subtle);
+}
+
+.btn-action-delete:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+  border-color: rgba(244, 63, 94, 0.3);
 }
 
 /* Pagination Footer */
@@ -470,38 +512,113 @@ const cycleStatus = (todo) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
-  background: #0f1523;
+  padding: 12px 18px;
   border-top: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.015);
   flex-wrap: wrap;
   gap: 12px;
 }
 
 .pagination-info {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
-.pagination-info strong {
+.info-highlight {
+  font-family: var(--font-mono);
   color: var(--text-primary);
+  font-weight: 600;
 }
 
-.pagination-nav {
+.pagination-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
 }
 
-.page-current-pill {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
+.page-current {
+  font-size: 12px;
+  color: var(--text-muted);
 }
-.page-current-pill span {
-  color: var(--text-primary);
+
+.page-num {
+  font-family: var(--font-mono);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.empty-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 420px;
+  margin-bottom: 18px;
+  line-height: 1.45;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Skeleton Loading */
+.skeleton-wrapper {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 42px;
+}
+
+.skeleton-cell {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-xs);
+  height: 14px;
+  animation: pulse 1.5s infinite;
+}
+
+.cell-checkbox { width: 16px; height: 16px; }
+.cell-title { flex: 1; height: 16px; }
+.cell-badge { width: 70px; }
+.cell-uuid { width: 90px; }
+.cell-date { width: 100px; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
 }
 </style>

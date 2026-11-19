@@ -1,11 +1,22 @@
+import os
+from pathlib import Path
 from typing import List, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Dynamically locate backend/.env and root .env
+_current_dir = Path(__file__).resolve().parent
+_backend_dir = _current_dir.parent.parent
+_env_files = [
+    str(_backend_dir / ".env"),
+    str(_backend_dir.parent / ".env"),
+    ".env"
+]
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_env_files,
         env_file_encoding="utf-8",
         extra="ignore"
     )
@@ -15,7 +26,7 @@ class Settings(BaseSettings):
     APP_PORT: int = 8000
     LOG_LEVEL: str = "INFO"
 
-    DATABASE_URL: str = "sqlite:///./todos.db"
+    DATABASE_URL: str = "mysql+pymysql://root:@127.0.0.1:3306/todo_db"
 
     CORS_ORIGINS: Union[List[str], str] = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000"
 

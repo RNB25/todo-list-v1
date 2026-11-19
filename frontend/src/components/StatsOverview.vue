@@ -1,55 +1,100 @@
 <template>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-header">
-        <span class="stat-label">Total Todos</span>
-        <div class="stat-icon-wrapper icon-total">
-          <Layers :size="18" />
+  <div class="metrics-ribbon">
+    <div class="metrics-grid">
+      <!-- Total metric -->
+      <div class="metric-item metric-all" @click="$emit('filter-status', '')" role="button" tabindex="0">
+        <div class="metric-top">
+          <span class="metric-name">Total Items</span>
+          <span class="metric-badge">All</span>
         </div>
+        <div class="metric-value">{{ totalItems.toLocaleString('id-ID') }}</div>
+        <div class="metric-sub">Tersimpan di MySQL</div>
       </div>
-      <div class="stat-value">{{ totalItems.toLocaleString('id-ID') }}</div>
-      <div class="stat-hint">Terdaftar di database MySQL</div>
+
+      <!-- Pending metric -->
+      <div 
+        class="metric-item metric-pending" 
+        :class="{ active: currentStatus === 'pending' }"
+        @click="$emit('filter-status', 'pending')" 
+        role="button" 
+        tabindex="0"
+      >
+        <div class="metric-top">
+          <span class="metric-name">Pending</span>
+          <span class="status-indicator-dot dot-pending"></span>
+        </div>
+        <div class="metric-value">{{ pendingCount.toLocaleString('id-ID') }}</div>
+        <div class="metric-sub">{{ calculatePercent(pendingCount) }}% antrean</div>
+      </div>
+
+      <!-- In Progress metric -->
+      <div 
+        class="metric-item metric-progress" 
+        :class="{ active: currentStatus === 'progress' }"
+        @click="$emit('filter-status', 'progress')" 
+        role="button" 
+        tabindex="0"
+      >
+        <div class="metric-top">
+          <span class="metric-name">In Progress</span>
+          <span class="status-indicator-dot dot-progress"></span>
+        </div>
+        <div class="metric-value">{{ progressCount.toLocaleString('id-ID') }}</div>
+        <div class="metric-sub">{{ calculatePercent(progressCount) }}% aktif</div>
+      </div>
+
+      <!-- Done metric -->
+      <div 
+        class="metric-item metric-done" 
+        :class="{ active: currentStatus === 'done' }"
+        @click="$emit('filter-status', 'done')" 
+        role="button" 
+        tabindex="0"
+      >
+        <div class="metric-top">
+          <span class="metric-name">Completed</span>
+          <span class="status-indicator-dot dot-done"></span>
+        </div>
+        <div class="metric-value">{{ doneCount.toLocaleString('id-ID') }}</div>
+        <div class="metric-sub">{{ calculatePercent(doneCount) }}% selesai</div>
+      </div>
     </div>
 
-    <div class="stat-card" @click="$emit('filter-status', 'pending')" style="cursor: pointer;">
-      <div class="stat-header">
-        <span class="stat-label">Pending</span>
-        <div class="stat-icon-wrapper icon-pending">
-          <Clock :size="18" />
+    <!-- Segmented Completion Meter -->
+    <div class="completion-bar-wrapper">
+      <div class="completion-meta">
+        <div class="completion-rate">
+          <span class="rate-value">{{ completionRate }}%</span>
+          <span class="rate-label">Tingkat Penyelesaian</span>
+        </div>
+        <div class="completion-legend">
+          <span class="legend-item"><span class="legend-dot dot-done"></span> Done</span>
+          <span class="legend-item"><span class="legend-dot dot-progress"></span> Progress</span>
+          <span class="legend-item"><span class="legend-dot dot-pending"></span> Pending</span>
         </div>
       </div>
-      <div class="stat-value">{{ pendingCount.toLocaleString('id-ID') }}</div>
-      <div class="stat-hint">Menunggu dikerjakan</div>
-    </div>
-
-    <div class="stat-card" @click="$emit('filter-status', 'progress')" style="cursor: pointer;">
-      <div class="stat-header">
-        <span class="stat-label">In Progress</span>
-        <div class="stat-icon-wrapper icon-progress">
-          <Activity :size="18" />
-        </div>
+      <div class="progress-bar-track" :title="`Done: ${doneCount}, Progress: ${progressCount}, Pending: ${pendingCount}`">
+        <div 
+          class="progress-segment segment-done" 
+          :style="{ width: `${calculatePercent(doneCount)}%` }"
+        ></div>
+        <div 
+          class="progress-segment segment-progress" 
+          :style="{ width: `${calculatePercent(progressCount)}%` }"
+        ></div>
+        <div 
+          class="progress-segment segment-pending" 
+          :style="{ width: `${calculatePercent(pendingCount)}%` }"
+        ></div>
       </div>
-      <div class="stat-value">{{ progressCount.toLocaleString('id-ID') }}</div>
-      <div class="stat-hint">Sedang berjalan</div>
-    </div>
-
-    <div class="stat-card" @click="$emit('filter-status', 'done')" style="cursor: pointer;">
-      <div class="stat-header">
-        <span class="stat-label">Done</span>
-        <div class="stat-icon-wrapper icon-done">
-          <CheckCircle2 :size="18" />
-        </div>
-      </div>
-      <div class="stat-value">{{ doneCount.toLocaleString('id-ID') }}</div>
-      <div class="stat-hint">Pekerjaan terselesaikan</div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { Layers, Clock, Activity, CheckCircle2 } from 'lucide-vue-next'
+import { computed } from 'vue'
 
-defineProps({
+const props = defineProps({
   totalItems: {
     type: Number,
     default: 0
@@ -65,91 +110,185 @@ defineProps({
   doneCount: {
     type: Number,
     default: 0
+  },
+  currentStatus: {
+    type: String,
+    default: ''
   }
 })
 
 defineEmits(['filter-status'])
+
+function calculatePercent(count) {
+  if (!props.totalItems || props.totalItems === 0) return 0
+  return Math.round((count / props.totalItems) * 100)
+}
+
+const completionRate = computed(() => {
+  if (!props.totalItems || props.totalItems === 0) return 0
+  return Math.round((props.doneCount / props.totalItems) * 100)
+})
 </script>
 
 <style scoped>
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.stat-card {
-  background: var(--bg-card);
+.metrics-ribbon {
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
 }
 
-.stat-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.stat-header {
+.metric-item {
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.14s ease;
+  user-select: none;
+}
+
+.metric-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+}
+
+.metric-item.active {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.metric-name {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.metric-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+}
+
+.status-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.dot-pending { background-color: var(--status-pending); }
+.dot-progress { background-color: var(--status-progress); }
+.dot-done { background-color: var(--status-done); }
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.metric-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Completion Bar */
+.completion-bar-wrapper {
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.completion-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 8px;
 }
 
-.stat-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.completion-rate {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.stat-icon-wrapper {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
+.rate-value {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+
+.rate-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.completion-legend {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 14px;
 }
 
-.icon-total {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
-.icon-pending {
-  background: rgba(148, 163, 184, 0.15);
-  color: #cbd5e1;
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
 }
 
-.icon-progress {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+.progress-bar-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-full);
+  display: flex;
+  overflow: hidden;
+  gap: 2px;
 }
 
-.icon-done {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+.progress-segment {
+  height: 100%;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.stat-value {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--text-primary);
-  line-height: 1.1;
-}
+.segment-done { background: var(--status-done); }
+.segment-progress { background: var(--status-progress); }
+.segment-pending { background: rgba(148, 163, 184, 0.5); }
 
-.stat-hint {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 6px;
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

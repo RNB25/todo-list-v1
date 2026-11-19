@@ -2,41 +2,60 @@
   <header class="header">
     <div class="header-inner">
       <div class="brand-group">
-        <div class="brand-icon">
-          <CheckSquare :size="24" />
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 11 12 14 22 4"></polyline>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
         </div>
-        <div>
+        <div class="brand-meta">
           <div class="brand-title-row">
-            <h1 class="brand-title">Sistem Todo List</h1>
-            <span class="version-tag">v1.0</span>
+            <h1 class="brand-title">Todo Studio</h1>
+            <span class="engine-badge">MySQL 8.0</span>
           </div>
-          <div class="tech-stack-row">
-            <span class="tech-item">FastAPI</span>
-            <span class="dot">·</span>
-            <span class="tech-item">MySQL 8.0</span>
-            <span class="dot">·</span>
-            <span class="tech-item">Vue 3</span>
-            <span class="dot">·</span>
-            <span class="tech-item">UUID v7</span>
+          <div class="brand-sub">
+            <span>FastAPI Backend</span>
+            <span class="sep">/</span>
+            <span>UUIDv7 Binary</span>
+            <span class="sep">/</span>
+            <a href="http://127.0.0.1:8000/docs" target="_blank" class="docs-link" title="Buka dokumentasi Swagger UI">
+              Swagger <ArrowUpRight :size="11" />
+            </a>
           </div>
         </div>
       </div>
 
       <div class="header-actions">
         <!-- Live Health Status Badge -->
-        <div class="health-badge" :class="`health-${healthStatus}`" :title="`Status Backend: ${healthStatus}`">
-          <span class="status-indicator"></span>
-          <span class="health-text">{{ healthStatus === 'healthy' ? 'API Online' : 'Connecting...' }}</span>
+        <div 
+          class="health-badge" 
+          :class="`health-${healthStatus}`" 
+          :title="`Health Check: ${healthStatus === 'healthy' ? 'MySQL & FastAPI Terhubung' : 'Terputus'}`"
+        >
+          <span class="pulse-dot"></span>
+          <span class="health-label">{{ healthStatus === 'healthy' ? 'MySQL Online' : 'Degraded' }}</span>
         </div>
 
-        <button class="btn btn-bulk" @click="$emit('open-bulk')" :disabled="loading">
-          <Sparkles :size="16" />
-          <span>Generate 1.000 Data</span>
+        <button 
+          class="btn btn-bulk" 
+          @click="$emit('open-bulk')" 
+          :disabled="loading"
+          title="Tekan tombol 'B' untuk shortcut"
+        >
+          <Database :size="14" />
+          <span>Generate Data</span>
+          <kbd>B</kbd>
         </button>
 
-        <button class="btn btn-primary" @click="$emit('open-create')" :disabled="loading">
-          <Plus :size="16" />
-          <span>Tambah Todo</span>
+        <button 
+          class="btn btn-primary" 
+          @click="$emit('open-create')" 
+          :disabled="loading"
+          title="Tekan tombol 'N' untuk shortcut"
+        >
+          <Plus :size="15" />
+          <span>Buat Todo</span>
+          <kbd class="kbd-inverse">N</kbd>
         </button>
       </div>
     </div>
@@ -44,7 +63,7 @@
 </template>
 
 <script setup>
-import { CheckSquare, Plus, Sparkles } from 'lucide-vue-next'
+import { Plus, Database, ArrowUpRight } from 'lucide-vue-next'
 
 defineProps({
   healthStatus: {
@@ -62,18 +81,19 @@ defineEmits(['open-create', 'open-bulk'])
 
 <style scoped>
 .header {
-  background: var(--bg-surface);
+  background: rgba(14, 16, 19, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
   z-index: 30;
-  box-shadow: var(--shadow-sm);
 }
 
 .header-inner {
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -84,19 +104,26 @@ defineEmits(['open-create', 'open-bulk'])
 .brand-group {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-.brand-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
-  color: #fff;
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: #181b21;
+  border: 1px solid var(--border-default);
+  color: #f4f4f5;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.brand-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .brand-title-row {
@@ -106,86 +133,105 @@ defineEmits(['open-create', 'open-bulk'])
 }
 
 .brand-title {
-  font-size: 19px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
-.version-tag {
-  font-size: 11px;
+.engine-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
   font-weight: 600;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  padding: 2px 7px;
-  border-radius: var(--radius-full);
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.02em;
 }
 
-.tech-stack-row {
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
 }
 
-.dot {
-  opacity: 0.5;
+.sep {
+  opacity: 0.4;
+}
+
+.docs-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: color 0.12s;
+}
+
+.docs-link:hover {
+  color: #ffffff;
+  text-decoration: underline;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
+/* Health Badge */
 .health-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 12px;
+  gap: 6px;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-subtle);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
+  font-family: var(--font-mono);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s;
 }
 
-.status-indicator {
-  width: 8px;
-  height: 8px;
+.pulse-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
+  position: relative;
 }
 
-.health-healthy .status-indicator {
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-}
-.health-healthy .health-text {
-  color: #34d399;
+.health-healthy .pulse-dot {
+  background-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
-.health-degraded .status-indicator {
-  background: #f59e0b;
-  box-shadow: 0 0 8px #f59e0b;
-}
-.health-degraded .health-text {
-  color: #fbbf24;
+.health-degraded .pulse-dot {
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
 }
 
-@media (max-width: 768px) {
-  .header-inner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 16px;
-  }
-  .header-actions {
-    justify-content: stretch;
-    width: 100%;
-  }
-  .header-actions .btn {
-    flex: 1;
+.health-healthy {
+  color: #a7f3d0;
+}
+
+.health-degraded {
+  color: #fde68a;
+}
+
+.kbd-inverse {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #27272a;
+}
+
+@media (max-width: 640px) {
+  .brand-sub, kbd {
+    display: none;
   }
 }
 </style>

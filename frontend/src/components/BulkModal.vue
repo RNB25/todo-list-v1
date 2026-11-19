@@ -3,11 +3,11 @@
     <div class="modal-content bulk-modal" role="dialog" aria-labelledby="bulk-title">
       <div class="modal-header">
         <div class="bulk-header-icon">
-          <Sparkles :size="22" />
+          <Database :size="18" />
         </div>
         <div class="modal-header-text">
-          <h2 id="bulk-title" class="modal-heading">Generate Data Acak Massal</h2>
-          <p class="modal-subheading">Pembuatan data acak otomatis secara atomik (SRS UC-07)</p>
+          <h2 id="bulk-title" class="modal-heading">Generate Data Massal</h2>
+          <p class="modal-subheading">Injeksi data acak dengan UUID v7 dalam 1 transaksi atomik (UC-07)</p>
         </div>
         <button
           v-if="!generating"
@@ -15,31 +15,31 @@
           @click="$emit('close')"
           aria-label="Tutup modal bulk"
         >
-          <X :size="18" />
+          <X :size="16" />
         </button>
       </div>
 
       <div class="bulk-body">
         <div class="bulk-info-banner">
-          <Info :size="16" class="info-icon" />
+          <Info :size="15" class="info-icon" />
           <p>
-            Fitur ini menghasilkan data todo dengan <strong>UUID v7</strong>, judul realistis, status, dan prioritas acak. Seluruh data disimpan dalam satu transaksi atomik.
+            Fitur ini menghasilkan data todo dengan <strong>UUID v7</strong>, judul realistis, status, dan prioritas acak. Seluruh data disimpan langsung ke database MySQL.
           </p>
         </div>
 
         <!-- Slider & Count Input -->
         <div class="count-selector-group">
           <div class="count-label-row">
-            <label for="bulk-count-input" class="form-label">Jumlah Todo yang Dibuat:</label>
-            <span class="count-display">{{ count }} item</span>
+            <label for="bulk-count-input" class="form-label">Jumlah Todo Dihasilkan:</label>
+            <span class="count-display">{{ count.toLocaleString('id-ID') }} item</span>
           </div>
 
           <div class="slider-row">
             <input
               type="range"
-              min="1"
+              min="10"
               max="1000"
-              step="50"
+              step="10"
               v-model.number="count"
               :disabled="generating"
               class="range-slider"
@@ -56,37 +56,37 @@
               :disabled="generating"
               @click="count = p"
             >
-              {{ p === 1000 ? '1.000 (Default)' : p }}
+              {{ p === 1000 ? '1.000 (SRS Max)' : `${p} item` }}
             </button>
           </div>
         </div>
 
         <!-- Generating Progress State -->
         <div v-if="generating" class="generating-progress-box">
-          <Loader2 :size="24" class="spin progress-spinner" />
+          <Loader2 :size="20" class="spin progress-spinner" />
           <div class="progress-text-group">
-            <div class="progress-title">Sedang Membuat {{ count.toLocaleString('id-ID') }} Todo...</div>
-            <div class="progress-subtitle">Menghasilkan UUID v7 dan memproses transaksi database MySQL</div>
+            <div class="progress-title">Sedang Menghasilkan {{ count.toLocaleString('id-ID') }} Data...</div>
+            <div class="progress-subtitle">Memproses UUIDv7 sequence dan commit transaksi MySQL</div>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
         <button
-          class="btn btn-secondary"
+          class="btn btn-secondary btn-sm"
           @click="$emit('close')"
           :disabled="generating"
         >
           Batal
         </button>
         <button
-          class="btn btn-bulk"
+          class="btn btn-primary btn-sm"
           @click="startGenerate"
           :disabled="generating || count < 1 || count > 1000"
         >
-          <Loader2 v-if="generating" :size="16" class="spin" />
-          <Sparkles v-else :size="16" />
-          <span>{{ generating ? 'Memproses...' : `Generate ${count.toLocaleString('id-ID')} Data` }}</span>
+          <Loader2 v-if="generating" :size="13" class="spin" />
+          <Database v-else :size="13" />
+          <span>{{ generating ? 'Menyimpan...' : `Eksekusi ${count.toLocaleString('id-ID')} Data` }}</span>
         </button>
       </div>
     </div>
@@ -95,7 +95,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Sparkles, X, Info, Loader2 } from 'lucide-vue-next'
+import { Database, X, Info, Loader2 } from 'lucide-vue-next'
 
 const props = defineProps({
   generating: {
@@ -105,37 +105,34 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'confirm'])
-
 const count = ref(1000)
 
-const startGenerate = () => {
-  emit('confirm', count.value)
+function startGenerate() {
+  if (count.value >= 1 && count.value <= 1000) {
+    emit('confirm', count.value)
+  }
 }
 </script>
 
 <style scoped>
-.bulk-modal {
-  max-width: 500px;
-}
-
 .modal-header {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 20px 24px 16px 24px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .bulk-header-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
-  color: #a78bfa;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-default);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
 .modal-header-text {
@@ -143,52 +140,51 @@ const startGenerate = () => {
 }
 
 .modal-heading {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .modal-subheading {
-  font-size: 13px;
+  font-size: 11px;
   color: var(--text-muted);
-  margin-top: 2px;
 }
 
 .modal-close-btn {
-  background: none;
+  background: transparent;
   border: none;
   color: var(--text-muted);
   cursor: pointer;
   padding: 4px;
+  border-radius: var(--radius-xs);
   display: flex;
-  align-items: center;
 }
 .modal-close-btn:hover {
-  color: var(--text-primary);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .bulk-body {
-  padding: 20px 24px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .bulk-info-banner {
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 13px;
-  color: #c7d2fe;
-  line-height: 1.5;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 
 .info-icon {
-  color: #a5b4fc;
+  color: #38bdf8;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -202,91 +198,90 @@ const startGenerate = () => {
 .count-label-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
 }
 
 .form-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
 }
 
 .count-display {
-  font-size: 16px;
-  font-weight: 700;
-  color: #a78bfa;
   font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .range-slider {
   width: 100%;
-  accent-color: #6366f1;
+  accent-color: #ffffff;
   cursor: pointer;
 }
 
 .quick-preset-chips {
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .preset-chip {
-  background: var(--bg-input);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: var(--radius-xs);
+  padding: 4px 10px;
   color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-mono);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.12s;
 }
 
 .preset-chip:hover {
-  border-color: #6366f1;
-  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .preset-chip.active {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: #6366f1;
-  color: #c7d2fe;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
   font-weight: 600;
 }
 
 .generating-progress-box {
-  background: #0f1523;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .progress-spinner {
-  color: #a78bfa;
+  color: #38bdf8;
 }
 
 .progress-title {
+  font-size: 12px;
   font-weight: 600;
-  font-size: 14px;
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
 .progress-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
-  margin-top: 2px;
 }
 
 .modal-footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
+  gap: 8px;
+  padding: 14px 20px;
   border-top: 1px solid var(--border-subtle);
-  background: #0f1523;
 }
 
 .spin {
